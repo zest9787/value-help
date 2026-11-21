@@ -1,0 +1,9 @@
+node_modules/
+dist/
+target/
+*.tsbuildinfo
+.idea/
+.npm-cache/
+.gradle/
+.gradle-user/
+build/
