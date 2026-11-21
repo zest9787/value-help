@@ -15,9 +15,9 @@ import {
 } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, SortChangedEvent } from 'ag-grid-community';
-import type { Row } from '../api/value-help/client';
 import { useValueHelpApi, useValueHelpOptions } from '../model/useValueHelp';
 import type { ValueHelpOptions } from '../model/config';
+import type { Row } from '../model/valueHelpApi';
 
 type Props = {
   id: string;

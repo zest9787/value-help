@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Select } from 'antd';
-import type { Row } from '../api/value-help/client';
 import { useValueHelpApi } from '../model/useValueHelp';
+import type { Row } from '../model/valueHelpApi';
 
 type ValueHelpSelectProps = {
   valueHelpId: string;

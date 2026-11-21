@@ -1,15 +1,10 @@
 import { createContext } from 'react';
-import { createValueHelpApi, type ValueHelpApi } from '../api/value-help/client';
 import type { ValueHelpDefinitions } from './config';
+import type { ValueHelpApi } from './valueHelpApi';
 
 export type ValueHelpContextValue = {
   api: ValueHelpApi;
   definitions: ValueHelpDefinitions;
 };
 
-export const defaultValueHelpApi = createValueHelpApi();
-
-export const ValueHelpContext = createContext<ValueHelpContextValue>({
-  api: defaultValueHelpApi,
-  definitions: {},
-});
+export const ValueHelpContext = createContext<ValueHelpContextValue | null>(null);

@@ -43,6 +43,29 @@ export type ResolvedOptions = {
 
 export type ValueHelpDefinitions = Record<string, ValueHelpOptions>;
 
+/**
+ * 공통 정의에 앱 정의를 ID 단위로 병합한다.
+ * modal은 속성별로 병합하고 columns/searchFields 배열은 앱 정의가 통째로 교체한다.
+ */
+export function mergeValueHelpDefinitions(
+  base: ValueHelpDefinitions,
+  overrides: ValueHelpDefinitions = {},
+): ValueHelpDefinitions {
+  const result: ValueHelpDefinitions = { ...base };
+  for (const [id, override] of Object.entries(overrides)) {
+    const key = id.toUpperCase();
+    const original = result[key] ?? {};
+    result[key] = {
+      ...original,
+      ...override,
+      ...(original.modal || override.modal
+        ? { modal: { ...original.modal, ...override.modal } }
+        : {}),
+    };
+  }
+  return result;
+}
+
 /** 우선순위: 공통 기본값 < 종류별 설정 < 호출 화면 옵션. 배열은 병합하지 않고 교체한다. */
 export function resolveValueHelpOptions(
   id: string,

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { resolveValueHelpOptions, type ValueHelpDefinitions } from './config';
+import {
+  mergeValueHelpDefinitions,
+  resolveValueHelpOptions,
+  type ValueHelpDefinitions,
+} from './config';
 
 const definitions: ValueHelpDefinitions = {
   EMPLOYEE: {
@@ -35,5 +39,22 @@ describe('resolveValueHelpOptions', () => {
     expect(() =>
       resolveValueHelpOptions('EMPLOYEE', { modal: { searchColumns: 0 } }, definitions),
     ).toThrow();
+  });
+
+  it('merges app overrides and new app-only definitions without mutating common definitions', () => {
+    const merged = mergeValueHelpDefinitions(definitions, {
+      EMPLOYEE: { title: '평가 대상자 선택', modal: { gridHeight: 500 } },
+      PROJECT: {
+        title: '프로젝트 검색',
+        columns: [{ field: 'projectId', headerName: '프로젝트 코드' }],
+      },
+    });
+
+    expect(merged.EMPLOYEE.title).toBe('평가 대상자 선택');
+    expect(merged.EMPLOYEE.modal).toEqual({ size: 'L', gridHeight: 500 });
+    expect(merged.EMPLOYEE.columns).toEqual(definitions.EMPLOYEE.columns);
+    expect(merged.PROJECT.title).toBe('프로젝트 검색');
+    expect(definitions.EMPLOYEE.title).toBe('사원 검색');
+    expect(definitions.PROJECT).toBeUndefined();
   });
 });

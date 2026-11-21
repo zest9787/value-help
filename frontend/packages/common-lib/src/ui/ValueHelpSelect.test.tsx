@@ -5,7 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ValueHelpSelect } from './ValueHelpSelect';
 import { ValueHelpProvider } from '../model/ValueHelpProvider';
-import type { ValueHelpApi } from '../api/value-help/client';
+import type { ValueHelpApi } from '../model/valueHelpApi';
 
 vi.mock('antd', () => ({
   Select: ({

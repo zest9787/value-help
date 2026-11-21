@@ -4,10 +4,10 @@ import {
   ValueHelpInput,
   ValueHelpModal,
   ValueHelpSelect,
+  hrCatalog,
   type Row,
   type ValueHelpOptions,
 } from 'common-lib/value-help';
-import { hrCatalog } from '../../../entities/value-help/model/hrValueHelpConfig';
 
 // 화면에서 필요한 항목만 표시하고 제목과 모달 크기를 변경하는 예시.
 const employeeOptions: ValueHelpOptions = {

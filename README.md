@@ -59,19 +59,44 @@ macOS/Linux에서는 `cd backend` 후 `./gradlew bootRun`으로 실행합니다.
 
 ```tsx
 import {
+  hrValueHelpDefinitions,
+  mergeValueHelpDefinitions,
   ValueHelpInput,
   ValueHelpProvider,
-  type ValueHelpDefinitions,
+  type ValueHelpApi,
 } from 'common-lib/value-help';
 
-const definitions: ValueHelpDefinitions = {
-  COMPANY: {
-    title: '회사 검색',
-    columns: [{ field: 'companyCode', headerName: '회사코드' }],
-  },
+// API 구현은 각 앱의 URL, 인증, 인터셉터 정책에 맞게 작성한다.
+const valueHelpApi: ValueHelpApi = {
+  metadata: (id) => appHttp.get(`/value-helps/${id}/metadata`).then((r) => r.data.data),
+  search: (id, filters, page, size, sortField, sortDirection) =>
+    appHttp
+      .post(`/value-helps/${id}/search`, {
+        filters,
+        page,
+        size,
+        sortField,
+        sortDirection,
+      })
+      .then((r) => r.data.data),
+  item: (id, key) =>
+    appHttp.get(`/value-helps/${id}/items/${key}`).then((r) => r.data.data),
 };
 
-<ValueHelpProvider definitions={definitions}>
+const definitions = mergeValueHelpDefinitions(hrValueHelpDefinitions, {
+  // 공통 항목 재정의
+  EMPLOYEE: {
+    title: '평가 대상자 선택',
+    modal: { gridHeight: 500 },
+  },
+  // common-lib에 없는 앱 전용 항목 추가
+  PROJECT: {
+    title: '프로젝트 검색',
+    columns: [{ field: 'projectId', headerName: '프로젝트 코드' }],
+  },
+});
+
+<ValueHelpProvider api={valueHelpApi} definitions={definitions}>
   <ValueHelpInput id="COMPANY" />
 </ValueHelpProvider>;
 ```
