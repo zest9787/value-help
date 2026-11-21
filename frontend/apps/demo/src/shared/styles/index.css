@@ -1,0 +1,41 @@
+body {
+  margin: 0;
+  background: #f2f5f9;
+  color: #1f2937;
+  font-family: Arial, sans-serif;
+}
+main {
+  max-width: 1000px;
+  margin: 48px auto;
+  padding: 0 24px;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+.description {
+  min-height: 22px;
+  color: #718096;
+  font-size: 12px;
+}
+.ant-modal {
+  padding-bottom: 12px;
+}
+.catalog-result {
+  overflow-x: auto;
+  margin: 16px 0 0;
+  padding: 12px;
+  background: #f5f7fa;
+}
+.value-help-select-message {
+  color: #ff4d4f;
+  font-size: 12px;
+  line-height: 1.5;
+}

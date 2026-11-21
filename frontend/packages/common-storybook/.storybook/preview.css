@@ -1,0 +1,36 @@
+body {
+  margin: 0;
+  background: #f5f7fa;
+}
+.story-shell {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+  padding: 24px;
+}
+.story-card {
+  width: 520px;
+  max-width: 100%;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+}
+.description {
+  min-height: 24px;
+  margin-top: 4px;
+  color: #64748b;
+}
+.actions,
+.pager {
+  margin-top: 16px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.value-help-select-message {
+  margin-top: 6px;
+  color: #d4380d;
+}
