@@ -5,6 +5,7 @@ import {
   ValueHelpModal,
   ValueHelpSelect,
   hrCatalog,
+  hrValueHelpDefinitions,
   type Row,
   type ValueHelpOptions,
 } from 'common-lib/value-help';
@@ -95,6 +96,22 @@ export function ValueHelpDemoPage() {
         {catalogResult && (
           <pre className="catalog-result">{JSON.stringify(catalogResult, null, 2)}</pre>
         )}
+        <ValueHelpInput id="EMPLOYEE" options={hrValueHelpDefinitions.EMPLOYEE} />
+        <ValueHelpInput
+          id="EMPLOYEE"
+          options={{
+            ...hrValueHelpDefinitions.EMPLOYEE,
+            title: '평가 대상자 선택',
+            modal: {
+              ...hrValueHelpDefinitions.EMPLOYEE.modal,
+              gridHeight: 500,
+            },
+            columns: [
+              { field: 'employeeId', headerName: '사번' },
+              { field: 'employeeName', headerName: '평가 대상자' },
+            ],
+          }}
+        />
       </Card>
       <ValueHelpModal
         id="CURRENCY"
