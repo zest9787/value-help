@@ -4,6 +4,7 @@ target/
 *.tsbuildinfo
 .idea/
 .npm-cache/
+.pnpm-store/
 .gradle/
 .gradle-user/
 build/

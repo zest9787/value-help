@@ -33,6 +33,8 @@ pnpm dev
 프런트엔드 코드 검사는 `pnpm lint`, 자동 수정은 `pnpm lint:fix`로 실행합니다. 포맷 검사는 `pnpm format:check`, 포맷 적용은 `pnpm format`을 사용합니다.
 프런트엔드 단위 테스트는 `pnpm test`로 실행합니다.
 
+공통 Value Help Storybook은 별도 `common-storybook` 모듈로 구성되어 있습니다. 개발 서버는 `pnpm storybook`, 정적 배포 산출물은 `pnpm build:storybook`으로 생성합니다. 결과는 `frontend/packages/common-storybook/storybook-static`에 만들어집니다.
+
 macOS/Linux에서는 `cd backend` 후 `./gradlew bootRun`으로 실행합니다. 첫 실행에는 Gradle과 의존성 다운로드를 위한 네트워크 연결이 필요합니다. 테스트는 `./gradlew test`(Windows PowerShell에서는 `.\gradlew.bat test`)로 실행합니다. 시작 클래스는 `com.example.valuehelp.ValueHelpApplication`입니다.
 
 백엔드 소스는 `com.example.valuehelp` 아래에서 다음과 같이 나뉩니다.
@@ -53,7 +55,26 @@ macOS/Linux에서는 `cd backend` 후 `./gradlew bootRun`으로 실행합니다.
 
 ## 화면 설정과 options
 
-공통 화면 기본값은 `frontend/src/valueHelpConfig.ts`에서 관리합니다. 서버 메타데이터는 데이터 식별 필드만 제공하므로, 검색폼이나 컬럼을 변경할 때 서버 UI 설정을 수정할 필요가 없습니다. 기존 클라이언트가 서버 메타데이터의 `columns`, `searchFields`, `modal` 등을 읽고 있었다면 프런트엔드 설정으로 이전해야 합니다.
+공통 컴포넌트는 `frontend/packages/common-lib`에서 관리하며 `common-lib/value-help`로 배포합니다. 데모 앱과 업무별 설정은 `frontend/apps/demo`에 있습니다. 서버 메타데이터는 데이터 식별 필드만 제공합니다.
+
+```tsx
+import {
+  ValueHelpInput,
+  ValueHelpProvider,
+  type ValueHelpDefinitions,
+} from 'common-lib/value-help';
+
+const definitions: ValueHelpDefinitions = {
+  COMPANY: {
+    title: '회사 검색',
+    columns: [{ field: 'companyCode', headerName: '회사코드' }],
+  },
+};
+
+<ValueHelpProvider definitions={definitions}>
+  <ValueHelpInput id="COMPANY" />
+</ValueHelpProvider>;
+```
 
 각 화면은 `ValueHelpModal`의 `options`로 필요한 값만 변경할 수 있습니다.
 
