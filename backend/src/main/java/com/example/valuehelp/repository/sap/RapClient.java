@@ -31,12 +31,13 @@ public class RapClient {
         }
     }
 
-    public JsonNode get(String entitySet, Map<String, String> parameters) {
-        // EntitySet은 서버 설정값만 허용하며 사용자가 경로를 주입하지 못하게 한다.
-        if (!entitySet.matches("[A-Za-z_][A-Za-z0-9_]*")) {
-            throw new IllegalArgumentException("잘못된 RAP EntitySet 설정입니다.");
+    public JsonNode get(String path, Map<String, String> parameters) {
+        // 경로는 서버 Enum/설정에서만 가져온다. 절대 URL·쿼리·상위 경로 이동은 허용하지 않는다.
+        if (path == null || !path.matches("/?[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*")) {
+            throw new IllegalArgumentException("잘못된 RAP 상대 path 설정입니다.");
         }
-        var builder = UriComponentsBuilder.fromUri(baseUri).pathSegment(entitySet);
+        String relativePath = path.startsWith("/") ? path.substring(1) : path;
+        var builder = UriComponentsBuilder.fromUri(baseUri).pathSegment(relativePath.split("/"));
         var values = new LinkedHashMap<String, Object>();
         int index = 0;
         for (var entry : parameters.entrySet()) {

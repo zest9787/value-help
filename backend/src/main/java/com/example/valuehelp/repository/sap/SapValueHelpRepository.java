@@ -54,7 +54,7 @@ public class SapValueHelpRepository implements ValueHelpRepository {
         if (sapSort == null || !definition.sortFields().contains(sort)) throw new IllegalArgumentException("허용되지 않은 정렬 필드");
         String direction = "desc".equalsIgnoreCase(request.sortDirection()) ? "desc" : "asc";
         params.put("$orderby", sapSort + " " + direction + (sort.equals("employeeId") ? "" : ",EmployeeId asc"));
-        JsonNode response = client.get(properties.employeeEntitySet(), params);
+        JsonNode response = client.get(path(definition), params);
         List<Map<String, Object>> items = readRows(response);
         JsonNode count = response.get("@odata.count");
         try {
@@ -75,9 +75,14 @@ public class SapValueHelpRepository implements ValueHelpRepository {
         params.put("$filter", "EmployeeId eq '" + key.replace("'", "''") + "'");
         params.put("$select", SELECT);
         params.put("$top", "2");
-        List<Map<String, Object>> rows = readRows(client.get(properties.employeeEntitySet(), params));
+        List<Map<String, Object>> rows = readRows(client.get(path(definition), params));
         if (rows.size() > 1) throw new RapConnectionException("SAP 사원 키가 고유하지 않습니다.");
         return rows.stream().findFirst();
+    }
+
+    private String path(Definition definition) {
+        // 기존 환경변수를 명시한 배포만 우선 적용한다. 기본 경로의 관리 지점은 Enum이다.
+        return properties.employeeEntitySet().isBlank() ? definition.path() : properties.employeeEntitySet();
     }
 
     private boolean isEmployee(Definition definition) { return "EMPLOYEE".equals(definition.metadata().id()); }

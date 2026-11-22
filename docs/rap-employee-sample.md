@@ -33,10 +33,24 @@ Invoke-RestMethod 'http://localhost:8080/api/v1/value-helps/EMPLOYEE/items/10001
 ## 실제 RAP에 맞게 변경할 곳
 
 1. `SAP_RAP_BASE_URL`, `SAP_RAP_EMPLOYEE_ENTITY_SET`을 실제 OData V4 서비스에 맞춘다. `SAP_RAP_CLIENT`는 선택 사항이다.
-2. `Registry`의 `EMPLOYEE` 필터 정의에서 웹 필드와 SAP 필드 및 지원 연산자를 실제 `$metadata`에 맞춘다.
+2. `ValueHelpType` Enum의 `EMPLOYEE` 필터 정의에서 웹 필드와 SAP 필드 및 지원 연산자를 실제 `$metadata`에 맞춘다.
 3. `SapValueHelpRepository`의 `FIELDS`와 `SELECT`를 실제 응답 속성에 맞춘다. 예제는 `EmployeeId`, `EmployeeName`, `DepartmentId`, `DepartmentName`, `CompanyCode`, `EmploymentStatus`를 선택하며 사원 ID와 이름을 문자열 필수값으로 취급한다. `$select` 대상 속성은 실제 서비스에 존재해야 한다.
 4. `SapProfileApiTest`와 `SapValueHelpRepositoryTest`를 실제 계약에 맞춰 수정한다. 현재 테스트는 가짜 RAP 응답을 사용하며 실제 SAP 연결 여부를 보증하지 않는다.
 
 `RapClient`는 쿼리 값을 URI 템플릿으로 한 번 인코딩하고, 연결 및 응답 시간 제한을 둔다. `SapValueHelpRepository`는 허용된 필터와 정렬 필드로 `$filter`, `$select`, `$top`, `$skip`, `$count`, `$orderby`를 생성하고 OData V4의 `value`와 `@odata.count`를 웹 응답에 매핑한다. 서비스가 이 쿼리 옵션을 지원해야 한다. 조회 오류나 응답 형식 오류는 공통 API에서 `502 SAP_ERROR`로 반환하며 상세 SAP 응답은 노출하지 않는다.
 
 단건 조회는 `EmployeeId`에 대한 문자열 동등 필터를 사용한다. 사원 키는 유일한 문자열이라고 가정하며, 실제 서비스의 복합 키·유효기간·권한 조건은 별도 설계가 필요하다. 서버 주도 페이징의 `@odata.nextLink`는 아직 이어서 읽지 않으므로 응답에 포함되면 오류로 처리한다. 필요하면 페이지를 이어 읽는 기능을 추가해야 한다.
+
+## 항목별 path
+
+`ValueHelpType` 상수의 첫 번째 인자가 SAP 요청의 상대 path다. 기본값은 기존 EntitySet 이름이다.
+공통 base URL이 `https://sap.example.com/sap/opu/odata4/`라면 다음처럼 서비스 경로를 포함할 수도 있다.
+
+```java
+EMPLOYEE("employee_service/0001/Employees", "employeeId", "employeeName", /* 기존 FieldDefinition 목록 */),
+COMPANY("company_service/0001/CompanyCodes", "companyCode", "companyName", /* 기존 FieldDefinition 목록 */),
+```
+
+이미 base URL에 서비스 경로가 있으면 path에는 `Employees`만 지정한다. path의 선행 `/`는 허용하되 호스트 루트로 이동하지 않고 base URL 아래에 붙인다. 절대 URL, 쿼리, `%` 인코딩, `..`는 허용하지 않는다.
+`SAP_RAP_EMPLOYEE_ENTITY_SET`을 명시하면 사원 Enum path보다 우선한다. Enum에서 관리하려면 해당 환경변수를 설정하지 않는다.
+목록 검색과 단건 조회는 같은 path를 사용한다. 현재 실제 RAP 연결은 EMPLOYEE만 지원하므로 다른 항목에 path를 지정해도 자동으로 SAP 연결이 활성화되지는 않는다.

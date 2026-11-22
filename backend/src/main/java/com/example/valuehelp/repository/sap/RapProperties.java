@@ -7,6 +7,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record RapProperties(String baseUrl, String employeeEntitySet, String client,
                             String username, String password) {
     public RapProperties {
-        if (employeeEntitySet == null || employeeEntitySet.isBlank()) employeeEntitySet = "Employees";
+        if (employeeEntitySet == null || employeeEntitySet.isBlank()) employeeEntitySet = "";
     }
 }

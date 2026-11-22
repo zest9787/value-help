@@ -28,7 +28,7 @@ class SapValueHelpRepositoryTest {
     void setup() {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        RapProperties props = new RapProperties("https://sap.example.test/odata/v4/", "Employees", "100", null, null);
+        RapProperties props = new RapProperties("https://sap.example.test/odata/v4/", "", "100", null, null);
         repository = new SapValueHelpRepository(new RapClient(builder.build(), props), props,
                 new ODataFilterBuilder(), new MockValueHelpRepository());
     }
@@ -57,6 +57,31 @@ class SapValueHelpRepositoryTest {
         assertEquals(21, result.totalCount());
         assertEquals("김민수", result.items().get(0).get("employeeName"));
         assertEquals("D101", result.items().get(0).get("departmentId"));
+        server.verify();
+    }
+
+    @Test
+    void usesConfiguredRelativePathForSearchAndLookup() {
+        var original = registry.get("EMPLOYEE");
+        var definition = new com.example.valuehelp.registry.Definition(
+                "/employee_service/0001/Employees", original.metadata(), original.filters(), original.sortFields());
+        server.expect(request -> assertEquals("/odata/v4/employee_service/0001/Employees", request.getURI().getPath()))
+                .andRespond(withSuccess("{\"@odata.count\":0,\"value\":[]}", MediaType.APPLICATION_JSON));
+        server.expect(request -> assertEquals("/odata/v4/employee_service/0001/Employees", request.getURI().getPath()))
+                .andRespond(withSuccess("{\"value\":[]}", MediaType.APPLICATION_JSON));
+        assertEquals(0, repository.search(definition, new SearchRequest(Map.of(), 0, 10, null, null)).totalCount());
+        assertTrue(repository.findByKey(definition, "10001").isEmpty());
+        server.verify();
+    }
+
+    @Test
+    void rejectsUnsafePathsBeforeMakingRequest() {
+        var original = registry.get("EMPLOYEE");
+        for (String path : java.util.List.of("https://other.test/Employees", "../Employees", "Employees?$top=1", "a/%2e%2e/Employees", "//other.test")) {
+            var definition = new com.example.valuehelp.registry.Definition(
+                    path, original.metadata(), original.filters(), original.sortFields());
+            assertThrows(IllegalArgumentException.class, () -> repository.findByKey(definition, "10001"));
+        }
         server.verify();
     }
 

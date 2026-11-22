@@ -4,7 +4,7 @@ import com.example.valuehelp.dto.Metadata;
 import java.util.*;
 import static com.example.valuehelp.registry.FilterOperator.*;
 
-/** 단일 카탈로그. 각 필드에 SAP 이름·검색 연산자·정렬 허용 여부를 함께 선언한다. */
+/** 첫 번째 인자는 공통 baseUrl 뒤에 붙일 SAP 상대 path. 각 필드의 검색·정렬도 함께 선언한다. */
 public enum ValueHelpType {
     COMPANY("CompanyCodes", "companyCode", "companyName",
             new FieldDefinition("companyCode", "CompanyCode", EQ, true),
@@ -185,7 +185,7 @@ public enum ValueHelpType {
 
     private final Definition definition;
 
-    ValueHelpType(String entitySet, String key, String text, FieldDefinition... fields) {
+    ValueHelpType(String path, String key, String text, FieldDefinition... fields) {
         Set<String> names = new HashSet<>();
         List<Filter> filters = new ArrayList<>();
         Set<String> sorts = new LinkedHashSet<>();
@@ -196,7 +196,7 @@ public enum ValueHelpType {
                 filters.add(new Filter(field.webField(), field.sapField(), field.filter()));
             if (field.sortable()) sorts.add(field.webField());
         }
-        definition = new Definition(entitySet, new Metadata(name(), key, text), List.copyOf(filters), Set.copyOf(sorts));
+        definition = new Definition(path, new Metadata(name(), key, text), List.copyOf(filters), Set.copyOf(sorts));
     }
 
     public Definition definition() { return definition; }
