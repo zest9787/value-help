@@ -1,4 +1,10 @@
+import type { ReactNode } from 'react';
 import type { Row } from './valueHelpApi';
+
+export type ValueHelpDisplayFormat = (code: string, text: string, row: Row) => ReactNode;
+
+export const defaultDisplayFormat: ValueHelpDisplayFormat = (code, text) =>
+  text ? `${text}(${code})` : code;
 
 export type ModalSize = 'S' | 'M' | 'L' | 'XL' | 'FULL';
 export type SelectionMode = 'single' | 'multiple';
@@ -27,9 +33,10 @@ export type ModalOptions = {
   gridHeight?: number;
 };
 export type ValueHelpOptions = {
+  /** 표시할 응답 필드명. Form에 저장하는 키는 서버 메타데이터를 따른다. */
+  displayFields?: { code?: string; text?: string };
   /** 입력창 표시 형식. Form에는 항상 코드만 저장한다. */
-  displayFormat?: 'textCode' | 'codeText' | 'text' | 'code';
-  displayFormatter?: (code: string, text: string, row?: Row) => string;
+  displayFormat?: ValueHelpDisplayFormat;
   title?: string;
   selectionMode?: SelectionMode;
   searchFields?: SearchField[];
@@ -38,8 +45,8 @@ export type ValueHelpOptions = {
   pageSize?: number;
 };
 export type ResolvedOptions = {
+  displayFields?: ValueHelpOptions['displayFields'];
   displayFormat: NonNullable<ValueHelpOptions['displayFormat']>;
-  displayFormatter?: ValueHelpOptions['displayFormatter'];
   title: string;
   selectionMode: SelectionMode;
   searchFields: SearchField[];
@@ -65,6 +72,9 @@ export function mergeValueHelpDefinitions(
     result[key] = {
       ...original,
       ...override,
+      ...(original.displayFields || override.displayFields
+        ? { displayFields: { ...original.displayFields, ...override.displayFields } }
+        : {}),
       ...(original.modal || override.modal
         ? { modal: { ...original.modal, ...override.modal } }
         : {}),
@@ -94,8 +104,8 @@ export function resolveValueHelpOptions(
   if (!Number.isInteger(modal.searchColumns) || modal.searchColumns < 1 || modal.searchColumns > 4)
     throw new Error('searchColumns는 1~4 사이의 정수여야 합니다.');
   return {
-    displayFormat: options.displayFormat ?? preset.displayFormat ?? 'textCode',
-    displayFormatter: options.displayFormatter ?? preset.displayFormatter,
+    displayFields: { ...preset.displayFields, ...options.displayFields },
+    displayFormat: options.displayFormat ?? preset.displayFormat ?? defaultDisplayFormat,
     title: options.title ?? preset.title ?? id,
     selectionMode: options.selectionMode ?? preset.selectionMode ?? 'single',
     searchFields: options.searchFields ?? preset.searchFields ?? [],

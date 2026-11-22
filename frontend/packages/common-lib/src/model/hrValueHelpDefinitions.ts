@@ -4,7 +4,7 @@ import type { ValueHelpDefinitions } from './config';
 export const hrValueHelpDefinitions: ValueHelpDefinitions = {
   COMPANY: {
     title: '회사 검색',
-    displayFormat: 'textCode',
+    displayFormat: (code, text) => (text ? `${text}(${code})` : code),
     searchFields: [{ name: 'companyName', label: '회사명', type: 'text' }],
     columns: [
       { field: 'companyCode', headerName: '회사코드' },
@@ -23,7 +23,8 @@ export const hrValueHelpDefinitions: ValueHelpDefinitions = {
   },
   EMPLOYEE: {
     title: '사원 검색',
-    displayFormat: 'textCode',
+    displayFields: { code: 'employeeId', text: 'employeeName' },
+    displayFormat: (code, text) => (text ? `${text}(${code})` : code),
     modal: { size: 'L' },
     searchFields: [
       { name: 'companyCode', label: '회사', type: 'valueHelp', valueHelpId: 'COMPANY' },

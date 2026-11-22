@@ -23,6 +23,9 @@ const employeeOptions: ValueHelpOptions = {
 
 export function ValueHelpDemoPage() {
   const [form] = Form.useForm();
+  const [displayCodeField, setDisplayCodeField] = useState('employeeId');
+  const [displayTextField, setDisplayTextField] = useState('employeeName');
+  const customEmployeeCode = Form.useWatch('customEmployeeId', form);
   const [submitted, setSubmitted] = useState<Record<string, unknown> | null>(null);
   const company = Form.useWatch('companyCode', form);
   const [open, setOpen] = useState(false);
@@ -38,6 +41,11 @@ export function ValueHelpDemoPage() {
       </Typography.Paragraph>
       <Form
         form={form}
+        initialValues={{
+          customEmployeeId: '10001',
+          formattedEmployee: '10001',
+          richEmployee: '10001',
+        }}
         layout="vertical"
         onFinish={(values) => {
           console.log('[Value Help Form submit]', values);
@@ -81,7 +89,7 @@ export function ValueHelpDemoPage() {
             예제 코드는 가상 데이터입니다. 업무 영역과 항목을 선택해 검색해 보세요.
           </Typography.Paragraph>
           <Form.Item name="languageInput" label="언어 · 명칭만 표시">
-            <ValueHelpInput id="LANGUAGE" options={{ displayFormat: 'text' }} />
+            <ValueHelpInput id="LANGUAGE" options={{ displayFormat: (_code, text) => text }} />
           </Form.Item>
           <Space wrap>
             <Select
@@ -119,7 +127,7 @@ export function ValueHelpDemoPage() {
               options={{
                 ...hrValueHelpDefinitions.EMPLOYEE,
                 title: '평가 대상자 선택',
-                displayFormat: 'codeText',
+                displayFormat: (code, text) => (text ? `${code}(${text})` : code),
                 modal: {
                   ...hrValueHelpDefinitions.EMPLOYEE.modal,
                   gridHeight: 500,
@@ -129,6 +137,60 @@ export function ValueHelpDemoPage() {
                   { field: 'employeeName', headerName: '평가 대상자' },
                 ],
               }}
+            />
+          </Form.Item>
+        </Card>
+        <Card title="입력창에 표시할 응답 필드 설정" style={{ maxWidth: 760, marginTop: 24 }}>
+          <Typography.Paragraph type="secondary">
+            표시할 코드와 명칭의 필드명을 지정합니다. 어떤 필드를 표시하든 Form에는
+            사번(employeeId)을 저장합니다.
+          </Typography.Paragraph>
+          <Form.Item label="표시 코드 필드">
+            <Select
+              value={displayCodeField}
+              onChange={setDisplayCodeField}
+              options={['employeeId', 'departmentId', 'companyCode'].map((value) => ({
+                value,
+                label: value,
+              }))}
+            />
+          </Form.Item>
+          <Form.Item label="표시 명칭 필드">
+            <Select
+              value={displayTextField}
+              onChange={setDisplayTextField}
+              options={['employeeName', 'departmentName'].map((value) => ({ value, label: value }))}
+            />
+          </Form.Item>
+          <Form.Item name="customEmployeeId" label="사원 · 선택한 필드로 표시">
+            <ValueHelpInput
+              id="EMPLOYEE"
+              options={{ displayFields: { code: displayCodeField, text: displayTextField } }}
+            />
+          </Form.Item>
+          <Typography.Paragraph>
+            실제 Form 코드값:{' '}
+            <Typography.Text code>{customEmployeeCode ?? '선택 없음'}</Typography.Text>
+          </Typography.Paragraph>
+          <Typography.Text type="secondary">
+            예: departmentName / departmentId를 선택하면 인사팀(D101)로 표시하고 10001을 저장합니다.
+          </Typography.Text>
+        </Card>
+        <Card title="displayFormat 콜백 · 다른 필드 조합" style={{ maxWidth: 760, marginTop: 24 }}>
+          <Form.Item name="formattedEmployee" label="문자열 · code $$$ text + 부서명">
+            <ValueHelpInput
+              id="EMPLOYEE"
+              displayFormat={(code, text, row) => `${code}$$$${text} / ${row.departmentName ?? ''}`}
+            />
+          </Form.Item>
+          <Form.Item name="richEmployee" label="ReactNode · 명칭 강조 + 부서명">
+            <ValueHelpInput
+              id="EMPLOYEE"
+              displayFormat={(code, text, row) => (
+                <span>
+                  <strong>{text}</strong> · {row.departmentName} ({code})
+                </span>
+              )}
             />
           </Form.Item>
         </Card>

@@ -12,7 +12,7 @@ const meta = {
     docs: {
       description: {
         component:
-          '모달 선택값을 명칭(코드) 등으로 표시하고 Form에는 코드만 저장합니다. 입력창은 읽기 전용이며 clear 아이콘으로 초기화합니다. displayText, displayFormatter 또는 항목별 options.displayFormat으로 표시를 설정합니다.',
+          '모달 선택값을 명칭(코드) 등으로 표시하고 Form에는 코드만 저장합니다. 입력창은 읽기 전용이며 clear 아이콘으로 초기화합니다. displayFormat(code, text, row) 콜백으로 문자열 또는 JSX를 표시합니다. 다른 응답 필드도 row에서 조합할 수 있습니다.',
       },
     },
   },
@@ -57,35 +57,41 @@ export const DependentFilter: Story = {
 };
 
 export const TextCode: Story = {
-  args: { options: { displayFormat: 'textCode' } },
+  args: { options: { displayFormat: (code, text) => (text ? `${text}(${code})` : code) } },
   render: (args) => <InputExample {...args} initialValue="10001" />,
 };
 export const CodeText: Story = {
-  args: { options: { displayFormat: 'codeText' } },
+  args: { options: { displayFormat: (code, text) => (text ? `${code}(${text})` : code) } },
   render: (args) => <InputExample {...args} initialValue="10001" />,
 };
 export const TextOnly: Story = {
-  args: { options: { displayFormat: 'text' } },
+  args: { options: { displayFormat: (_code, text) => text } },
   render: (args) => <InputExample {...args} initialValue="10001" />,
 };
 export const CodeOnly: Story = {
-  args: { options: { displayFormat: 'code' } },
+  args: { options: { displayFormat: (code) => code } },
   render: (args) => <InputExample {...args} initialValue="10001" />,
 };
 export const CustomFormatter: Story = {
-  args: { options: { displayFormatter: (code, text) => (text ? `${text} / ${code}` : code) } },
+  args: { options: { displayFormat: (code, text) => (text ? `${text} / ${code}` : code) } },
   render: (args) => <InputExample {...args} initialValue="10001" />,
 };
 export const ExplicitDisplayText: Story = {
-  args: { displayText: '평가 대상자 · 김민수(10001)' },
+  args: { displayFormat: (code, text) => `평가 대상자 · ${text}(${code})` },
   render: (args) => <InputExample {...args} initialValue="10001" />,
 };
 
-const perItemDefinitions = {
+const perItemDefinitions: typeof storyDefinitions = {
   ...storyDefinitions,
-  EMPLOYEE: { ...storyDefinitions.EMPLOYEE, displayFormat: 'textCode' as const },
-  COMPANY: { ...storyDefinitions.COMPANY, displayFormat: 'codeText' as const },
-  LANGUAGE: { ...storyDefinitions.LANGUAGE, displayFormat: 'text' as const },
+  EMPLOYEE: {
+    ...storyDefinitions.EMPLOYEE,
+    displayFormat: (code, text) => (text ? `${text}(${code})` : code),
+  },
+  COMPANY: {
+    ...storyDefinitions.COMPANY,
+    displayFormat: (code, text) => (text ? `${code}(${text})` : code),
+  },
+  LANGUAGE: { ...storyDefinitions.LANGUAGE, displayFormat: (_code, text) => text },
 };
 
 function SubmitExample() {
@@ -129,4 +135,26 @@ function SubmitExample() {
 
 export const FormSubmit: Story = {
   render: () => <SubmitExample />,
+};
+
+/** 표시 필드를 부서로 바꿔도 Form의 사원 코드는 유지된다. */
+export const DisplayFields: Story = {
+  args: {
+    options: {
+      displayFields: { code: 'departmentId', text: 'departmentName' },
+      displayFormat: (code, text) => (text ? `${text}(${code})` : code),
+    },
+  },
+  render: (args) => <InputExample {...args} initialValue="10001" />,
+};
+
+export const OtherFieldsAndReactNode: Story = {
+  args: {
+    displayFormat: (code, text, row) => (
+      <span>
+        <strong>{text}</strong> · {row.departmentName} <em>({code})</em>
+      </span>
+    ),
+  },
+  render: (args) => <InputExample {...args} initialValue="10001" />,
 };

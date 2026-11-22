@@ -254,18 +254,15 @@ export function ValueHelpInput({
   onChange,
   filters = {},
   options,
-  displayText,
-  displayFormatter,
+  displayFormat,
 }: {
   id: string;
   value?: string;
   onChange?: (value?: string) => void;
   filters?: Row;
   options?: ValueHelpOptions;
-  /** 화면에 표시할 문구. value가 없으면 항상 빈 입력창으로 표시한다. */
-  displayText?: string;
-  /** 표시 문구를 코드·명칭으로 구성한다. 기본값은 명칭(코드). displayText가 우선한다. */
-  displayFormatter?: (code: string, text: string, row?: Row) => string;
+  /** options 및 항목별 기본값보다 우선하는 입력창 표시 함수. */
+  displayFormat?: ValueHelpOptions['displayFormat'];
 }) {
   const [open, setOpen] = useState(false);
   const api = useValueHelpApi();
@@ -279,20 +276,14 @@ export function ValueHelpInput({
     retry: false,
     staleTime: 30_000,
   });
-  const text = meta.data && detail.data ? (detail.data[meta.data.textField] ?? '') : '';
-  const formatter = displayFormatter ?? config.displayFormatter;
-  const defaultText = !text
-    ? (value ?? '')
-    : config.displayFormat === 'text'
-      ? text
-      : config.displayFormat === 'code'
-        ? (value ?? '')
-        : config.displayFormat === 'codeText'
-          ? `${value}(${text})`
-          : `${text}(${value})`;
-  const inputText = !value
-    ? ''
-    : (displayText ?? formatter?.(value, text, detail.data) ?? defaultText);
+  // 표시 필드만 바꾼다. value/onChange의 저장 코드는 metadata.keyField를 유지한다.
+  const textField = config.displayFields?.text ?? meta.data?.textField;
+  const codeField = config.displayFields?.code ?? meta.data?.keyField;
+  const text = textField ? (detail.data?.[textField] ?? '') : '';
+  const shownCode = (codeField ? detail.data?.[codeField] : undefined) ?? value ?? '';
+  const row = detail.data ?? {};
+  const renderedValue = value ? (displayFormat ?? config.displayFormat)(shownCode, text, row) : '';
+  const isInputValue = typeof renderedValue === 'string' || typeof renderedValue === 'number';
 
   // readOnly에서는 Ant Design의 allowClear가 숨겨지므로 suffix에 clear 아이콘을 배치한다.
   const clearIcon = value ? (
@@ -316,8 +307,13 @@ export function ValueHelpInput({
   return (
     <>
       <Input.Search
-        value={inputText}
-        placeholder="검색하여 선택하세요"
+        value={isInputValue ? renderedValue : ''}
+        prefix={
+          isInputValue ? undefined : <span className="value-help-display">{renderedValue}</span>
+        }
+        styles={isInputValue ? undefined : { input: { width: 0, minWidth: 0, padding: 0 } }}
+        aria-label={isInputValue ? undefined : `선택값 ${value ?? ''}`}
+        placeholder={value ? undefined : '검색하여 선택하세요'}
         readOnly
         suffix={<span>{clearIcon}</span>}
         onSearch={() => setOpen(true)}

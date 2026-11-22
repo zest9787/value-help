@@ -26,22 +26,32 @@ describe('resolveValueHelpOptions', () => {
     expect(resolved.columns).toEqual([{ field: 'employeeId', headerName: '사번' }]);
   });
 
-  it('resolves per-item display settings and call-site overrides', () => {
-    const formatter = (code: string, text: string) => `${text} / ${code}`;
-    const presets = {
-      EMPLOYEE: { displayFormat: 'text' as const, displayFormatter: formatter },
-      COMPANY: { displayFormat: 'code' as const },
-    };
-    expect(resolveValueHelpOptions('EMPLOYEE', {}, presets).displayFormatter).toBe(formatter);
-    expect(resolveValueHelpOptions('COMPANY', {}, presets).displayFormat).toBe('code');
-    expect(
-      resolveValueHelpOptions('EMPLOYEE', { displayFormat: 'codeText' }, presets).displayFormat,
-    ).toBe('codeText');
+  it('resolves display callbacks and allows arbitrary row fields', () => {
+    const displayFormat = (code: string, text: string, row: Record<string, string>) =>
+      `${code}$$$${text} / ${row.departmentName}`;
+    const presets = { EMPLOYEE: { displayFormat } };
+    const resolved = resolveValueHelpOptions('EMPLOYEE', {}, presets);
+    expect(resolved.displayFormat('10001', '김민수', { departmentName: '인사팀' })).toBe(
+      '10001$$$김민수 / 인사팀',
+    );
     const override = (code: string) => code;
     expect(
-      resolveValueHelpOptions('EMPLOYEE', { displayFormatter: override }, presets).displayFormatter,
+      resolveValueHelpOptions('EMPLOYEE', { displayFormat: override }, presets).displayFormat,
     ).toBe(override);
-    expect(resolveValueHelpOptions('UNKNOWN').displayFormat).toBe('textCode');
+    expect(resolveValueHelpOptions('UNKNOWN').displayFormat('10001', '김민수', {})).toBe(
+      '김민수(10001)',
+    );
+  });
+
+  it('merges display field mappings per item and per input', () => {
+    const presets = { EMPLOYEE: { displayFields: { code: 'employeeId', text: 'employeeName' } } };
+    const config = resolveValueHelpOptions(
+      'EMPLOYEE',
+      { displayFields: { text: 'departmentName' } },
+      presets,
+    );
+    expect(config.displayFields).toEqual({ code: 'employeeId', text: 'departmentName' });
+    expect(presets.EMPLOYEE.displayFields.text).toBe('employeeName');
   });
 
   it('replaces arrays without mutating app definitions', () => {

@@ -10,6 +10,7 @@ export type {
   SearchField,
   SelectionMode,
   ValueHelpColumn,
+  ValueHelpDisplayFormat,
   ValueHelpDefinitions,
   ValueHelpOptions,
 } from './model/config';
