@@ -51,8 +51,8 @@ public class MockValueHelpRepository implements ValueHelpRepository {
         List<Map<String, Object>> rows = data.get(d.metadata().id()).stream().filter(row -> filters.entrySet().stream().allMatch(e -> {
             if (e.getValue() == null || e.getValue().toString().isBlank()) return true;
             String actual = String.valueOf(row.getOrDefault(e.getKey(), "")), expected = e.getValue().toString();
-            String op = d.filters().stream().filter(f -> f.webField().equals(e.getKey())).findFirst().orElseThrow().operator();
-            return op.equals("contains") ? actual.toLowerCase(Locale.ROOT).contains(expected.toLowerCase(Locale.ROOT)) : actual.equals(expected);
+            FilterOperator op = d.filters().stream().filter(f -> f.webField().equals(e.getKey())).findFirst().orElseThrow().operator();
+            return op == FilterOperator.CONTAINS ? actual.toLowerCase(Locale.ROOT).contains(expected.toLowerCase(Locale.ROOT)) : actual.equals(expected);
         })).sorted(comparator(d, req)).toList();
         int from = (int) Math.min((long) req.page() * req.size(), rows.size()), to = Math.min(from + req.size(), rows.size());
         return new Page(rows.subList(from, to), rows.size(), req.page(), req.size());

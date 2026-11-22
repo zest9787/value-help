@@ -1,3 +1,5 @@
+import type { Row } from './valueHelpApi';
+
 export type ModalSize = 'S' | 'M' | 'L' | 'XL' | 'FULL';
 export type SelectionMode = 'single' | 'multiple';
 export type SearchField = {
@@ -25,6 +27,9 @@ export type ModalOptions = {
   gridHeight?: number;
 };
 export type ValueHelpOptions = {
+  /** 입력창 표시 형식. Form에는 항상 코드만 저장한다. */
+  displayFormat?: 'textCode' | 'codeText' | 'text' | 'code';
+  displayFormatter?: (code: string, text: string, row?: Row) => string;
   title?: string;
   selectionMode?: SelectionMode;
   searchFields?: SearchField[];
@@ -33,6 +38,8 @@ export type ValueHelpOptions = {
   pageSize?: number;
 };
 export type ResolvedOptions = {
+  displayFormat: NonNullable<ValueHelpOptions['displayFormat']>;
+  displayFormatter?: ValueHelpOptions['displayFormatter'];
   title: string;
   selectionMode: SelectionMode;
   searchFields: SearchField[];
@@ -87,6 +94,8 @@ export function resolveValueHelpOptions(
   if (!Number.isInteger(modal.searchColumns) || modal.searchColumns < 1 || modal.searchColumns > 4)
     throw new Error('searchColumns는 1~4 사이의 정수여야 합니다.');
   return {
+    displayFormat: options.displayFormat ?? preset.displayFormat ?? 'textCode',
+    displayFormatter: options.displayFormatter ?? preset.displayFormatter,
     title: options.title ?? preset.title ?? id,
     selectionMode: options.selectionMode ?? preset.selectionMode ?? 'single',
     searchFields: options.searchFields ?? preset.searchFields ?? [],

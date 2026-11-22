@@ -1,6 +1,6 @@
 # SAP HCM Value Help 예제 목록
 
-이 목록은 HCM / S/4HANA 인사 업무에 활용할 수 있는 목 데이터 예제 40종이다. 회사별 커스터마이징, 국가, 적용 모듈과 서비스 범위가 다르므로 SAP에서 제공하는 모든 Value Help의 확정 목록은 아니다. `HrDefinitions`의 EntitySet, SAP 필드 이름과 `HrMockData`의 코드·이름은 실제 시스템의 표준 서비스나 실제 코드값이 아닌 예제다. 신규 항목은 기본적으로 두 개의 샘플 행을 포함하며 인사영역은 페이징 확인을 위해 총 26건을 제공한다.
+이 목록은 HCM / S/4HANA 인사 업무에 활용할 수 있는 목 데이터 예제 40종이다. 회사별 커스터마이징, 국가, 적용 모듈과 서비스 범위가 다르므로 SAP에서 제공하는 모든 Value Help의 확정 목록은 아니다. `ValueHelpType`의 EntitySet, SAP 필드 이름과 `HrMockData`의 코드·이름은 실제 시스템의 표준 서비스나 실제 코드값이 아닌 예제다. 신규 항목은 기본적으로 두 개의 샘플 행을 포함하며 인사영역은 페이징 확인을 위해 총 26건을 제공한다.
 
 | 업무 영역 | Value Help ID |
 | --- | --- |
@@ -12,7 +12,7 @@
 | 기본정보 | `COUNTRY`, `REGION`, `LANGUAGE`, `MARITAL_STATUS`, `NATIONALITY`, `BANK` |
 | 인재관리 | `EDUCATION_LEVEL`, `QUALIFICATION`, `TRAINING_COURSE` |
 
-화면에서 사용하는 검색조건과 컬럼은 `frontend/src/hrValueHelpConfig.ts`, 서버의 엔티티·필터 허용 목록은 `backend/src/main/java/com/example/valuehelp/registry/HrDefinitions.java`, 샘플 데이터는 `backend/src/main/java/com/example/valuehelp/repository/mock/HrMockData.java`에서 관리한다. 회사·부서·사원·통화는 기존 설정 파일에 있다.
+화면에서 사용하는 검색조건과 컬럼은 `frontend/src/hrValueHelpConfig.ts`, 서버의 엔티티·필터 허용 목록은 `backend/src/main/java/com/example/valuehelp/registry/ValueHelpType.java`, 샘플 데이터는 `backend/src/main/java/com/example/valuehelp/repository/mock/HrMockData.java`에서 관리한다. 회사·부서·사원·통화도 같은 Enum에서 관리한다.
 
 ## 종속 검색 예시
 

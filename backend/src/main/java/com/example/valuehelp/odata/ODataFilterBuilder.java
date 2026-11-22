@@ -19,8 +19,8 @@ public class ODataFilterBuilder {
             if (e.getValue() == null || e.getValue().toString().isBlank()) continue;
             String v = e.getValue().toString().replace("'", "''");
             parts.add(switch (f.operator()) {
-                case "eq" -> f.sapField() + " eq '" + v + "'";
-                case "contains" -> "contains(" + f.sapField() + ",'" + v + "')";
+                case EQ -> f.sapField() + " eq '" + v + "'";
+                case CONTAINS -> "contains(" + f.sapField() + ",'" + v + "')";
                 default -> throw new IllegalArgumentException("지원하지 않는 연산자");
             });
         }

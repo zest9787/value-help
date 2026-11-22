@@ -26,6 +26,24 @@ describe('resolveValueHelpOptions', () => {
     expect(resolved.columns).toEqual([{ field: 'employeeId', headerName: '사번' }]);
   });
 
+  it('resolves per-item display settings and call-site overrides', () => {
+    const formatter = (code: string, text: string) => `${text} / ${code}`;
+    const presets = {
+      EMPLOYEE: { displayFormat: 'text' as const, displayFormatter: formatter },
+      COMPANY: { displayFormat: 'code' as const },
+    };
+    expect(resolveValueHelpOptions('EMPLOYEE', {}, presets).displayFormatter).toBe(formatter);
+    expect(resolveValueHelpOptions('COMPANY', {}, presets).displayFormat).toBe('code');
+    expect(
+      resolveValueHelpOptions('EMPLOYEE', { displayFormat: 'codeText' }, presets).displayFormat,
+    ).toBe('codeText');
+    const override = (code: string) => code;
+    expect(
+      resolveValueHelpOptions('EMPLOYEE', { displayFormatter: override }, presets).displayFormatter,
+    ).toBe(override);
+    expect(resolveValueHelpOptions('UNKNOWN').displayFormat).toBe('textCode');
+  });
+
   it('replaces arrays without mutating app definitions', () => {
     expect(
       resolveValueHelpOptions('EMPLOYEE', { searchFields: [] }, definitions).searchFields,

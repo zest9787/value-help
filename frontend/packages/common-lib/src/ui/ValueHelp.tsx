@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Button,
@@ -247,52 +247,100 @@ export function ValueHelpModal({ id, open, onClose, onSelect, fixedFilters = {},
   );
 }
 
-/** Ant Design Form에서 코드 값으로 사용할 수 있는 입력 컴포넌트. */
+/** 입력창에는 명칭(코드)을 표시하고 Form의 value/onChange에는 코드만 전달한다. */
 export function ValueHelpInput({
   id,
   value,
   onChange,
   filters = {},
   options,
+  displayText,
+  displayFormatter,
 }: {
   id: string;
   value?: string;
   onChange?: (value?: string) => void;
   filters?: Row;
   options?: ValueHelpOptions;
+  /** 화면에 표시할 문구. value가 없으면 항상 빈 입력창으로 표시한다. */
+  displayText?: string;
+  /** 표시 문구를 코드·명칭으로 구성한다. 기본값은 명칭(코드). displayText가 우선한다. */
+  displayFormatter?: (code: string, text: string, row?: Row) => string;
 }) {
   const [open, setOpen] = useState(false);
   const api = useValueHelpApi();
+  const queryClient = useQueryClient();
+  const config = useValueHelpOptions(id, options);
   const meta = useQuery({ queryKey: ['metadata', id], queryFn: () => api.metadata(id) });
   const detail = useQuery({
     queryKey: ['item', id, value],
     queryFn: () => api.item(id, value!),
     enabled: !!value,
     retry: false,
+    staleTime: 30_000,
   });
+  const text = meta.data && detail.data ? (detail.data[meta.data.textField] ?? '') : '';
+  const formatter = displayFormatter ?? config.displayFormatter;
+  const defaultText = !text
+    ? (value ?? '')
+    : config.displayFormat === 'text'
+      ? text
+      : config.displayFormat === 'code'
+        ? (value ?? '')
+        : config.displayFormat === 'codeText'
+          ? `${value}(${text})`
+          : `${text}(${value})`;
+  const inputText = !value
+    ? ''
+    : (displayText ?? formatter?.(value, text, detail.data) ?? defaultText);
+
+  // readOnly에서는 Ant Design의 allowClear가 숨겨지므로 suffix에 clear 아이콘을 배치한다.
+  const clearIcon = value ? (
+    <Button
+      type="text"
+      size="small"
+      aria-label="선택값 지우기"
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={(event) => {
+        event.stopPropagation();
+        onChange?.(undefined);
+      }}
+      icon={
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm3 9.3-.7.7L8 8.7 5.7 11l-.7-.7L7.3 8 5 5.7l.7-.7L8 7.3 10.3 5l.7.7L8.7 8 11 10.3Z" />
+        </svg>
+      }
+    />
+  ) : null;
+
   return (
     <>
       <Input.Search
-        value={value ?? ''}
-        placeholder="코드 입력 또는 검색"
-        onChange={(e) => onChange?.(e.target.value || undefined)}
+        value={inputText}
+        placeholder="검색하여 선택하세요"
+        readOnly
+        suffix={<span>{clearIcon}</span>}
         onSearch={() => setOpen(true)}
         enterButton="검색"
       />
-      <div className="description">
-        {detail.data && meta.data
-          ? detail.data[meta.data.textField]
-          : value && detail.isError
-            ? '일치하는 코드가 없습니다.'
-            : '\u00a0'}
-      </div>
+      {value && detail.isError && (
+        <div className="description">일치하는 코드를 조회할 수 없습니다.</div>
+      )}
       <ValueHelpModal
         id={id}
         open={open}
         onClose={() => setOpen(false)}
         fixedFilters={filters}
         options={{ ...options, selectionMode: 'single' }}
-        onSelect={(rows, keyField) => onChange?.(rows[0]?.[keyField])}
+        onSelect={(rows, keyField) => {
+          const row = rows[0];
+          const code = row?.[keyField];
+          if (!code) return;
+          // 선택한 행을 캐시해 명칭을 즉시 표시한다. Form에는 코드만 저장한다.
+          queryClient.setQueryData(['item', id, code], row);
+          onChange?.(code);
+          setOpen(false);
+        }}
       />
     </>
   );
