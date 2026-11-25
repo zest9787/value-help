@@ -12,7 +12,7 @@ const meta = {
     docs: {
       description: {
         component:
-          '모달 선택값을 명칭(코드) 등으로 표시하고 Form에는 코드만 저장합니다. 입력창은 읽기 전용이며 clear 아이콘으로 초기화합니다. displayFormat(code, text, row) 콜백으로 문자열 또는 JSX를 표시합니다. 다른 응답 필드도 row에서 조합할 수 있습니다.',
+          '모달 선택값을 명칭(코드) 등으로 표시하고 Form에는 코드만 저장합니다. 기본 입력창은 읽기 전용이며 options.autoComplete로 자동완성을 선택적으로 켤 수 있습니다. displayFormat(code, text, row) 콜백으로 문자열 또는 JSX를 표시합니다.',
       },
     },
   },
@@ -41,6 +41,11 @@ export const Empty: Story = {
 
 export const SavedValue: Story = {
   render: (args) => <InputExample {...args} initialValue="10002" />,
+};
+
+export const AutoComplete: Story = {
+  args: { options: { autoComplete: { searchField: 'employeeName', debounceMs: 300 } } },
+  render: (args) => <InputExample {...args} />,
 };
 
 export const DependentFilter: Story = {

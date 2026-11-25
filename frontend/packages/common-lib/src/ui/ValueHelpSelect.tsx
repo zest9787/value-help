@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Select } from 'antd';
-import { useValueHelpApi } from '../model/useValueHelp';
+import { useValueHelpApi, useValueHelpError } from '../model/useValueHelp';
 import type { Row } from '../model/valueHelpApi';
 
 type ValueHelpSelectProps = {
@@ -57,6 +57,30 @@ export function ValueHelpSelect({
     : [];
   const tooMany = (list.data?.totalCount ?? 0) > MAX_OPTIONS;
   const failed = meta.isError || list.isError;
+  useValueHelpError(
+    `metadata:${valueHelpId}`,
+    meta.errorUpdatedAt,
+    'Value Help 정보를 불러오지 못했습니다.',
+    meta.isError,
+  );
+  useValueHelpError(
+    `search:${valueHelpId}:${JSON.stringify([filters, 0, {}, MAX_OPTIONS])}`,
+    list.errorUpdatedAt,
+    '목록을 불러오지 못했습니다. 다시 시도해 주세요.',
+    list.isError,
+  );
+  useValueHelpError(
+    `item:${valueHelpId}:${value}`,
+    selected.errorUpdatedAt,
+    '선택된 코드의 명칭을 조회하지 못했습니다.',
+    selected.isError,
+  );
+  useValueHelpError(
+    `select-limit:${valueHelpId}:${JSON.stringify(filters)}`,
+    list.dataUpdatedAt,
+    '목록이 200건을 초과합니다. 검색 모달을 사용하세요.',
+    tooMany,
+  );
 
   return (
     <>
@@ -75,15 +99,6 @@ export function ValueHelpSelect({
         style={{ width: '100%' }}
         notFoundContent={list.isFetching ? '조회 중...' : '조회 결과가 없습니다.'}
       />
-      {(failed || tooMany || selected.isError) && (
-        <div className="value-help-select-message" role="alert">
-          {failed
-            ? '목록을 불러오지 못했습니다. 서버 연결을 확인하세요.'
-            : tooMany
-              ? '목록이 200건을 초과합니다. 검색 모달을 사용하세요.'
-              : '선택된 코드의 명칭을 찾을 수 없습니다.'}
-        </div>
-      )}
     </>
   );
 }

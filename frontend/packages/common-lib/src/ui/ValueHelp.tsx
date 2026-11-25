@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Alert,
   Button,
   Col,
   Form,
@@ -15,9 +14,10 @@ import {
 } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, SortChangedEvent } from 'ag-grid-community';
-import { useValueHelpApi, useValueHelpOptions } from '../model/useValueHelp';
+import { useValueHelpApi, useValueHelpError, useValueHelpOptions } from '../model/useValueHelp';
 import type { ValueHelpOptions } from '../model/config';
 import type { Row } from '../model/valueHelpApi';
+import { ValueHelpAutoComplete } from './ValueHelpAutoComplete';
 
 type Props = {
   id: string;
@@ -66,6 +66,18 @@ export function ValueHelpModal({ id, open, onClose, onSelect, fixedFilters = {},
     queryFn: () => api.search(id, merged, page, config.pageSize, sort.field, sort.direction),
     enabled: open && !!meta.data,
   });
+  useValueHelpError(
+    `metadata:${id}`,
+    meta.errorUpdatedAt,
+    'Value Help 정보를 불러오지 못했습니다.',
+    open && meta.isError,
+  );
+  useValueHelpError(
+    `search:${id}:${JSON.stringify([merged, page, sort, config.pageSize])}`,
+    result.errorUpdatedAt,
+    '목록을 조회하지 못했습니다. 다시 시도해 주세요.',
+    open && result.isError,
+  );
   const cols = useMemo<ColDef<Row>[]>(
     () =>
       config.columns.map((c) => ({
@@ -104,9 +116,6 @@ export function ValueHelpModal({ id, open, onClose, onSelect, fixedFilters = {},
         destroyOnClose
       >
         {meta.isLoading && <Spin />}
-        {meta.isError && (
-          <Alert type="error" message="메타데이터를 불러오지 못했습니다." showIcon />
-        )}
         {m && (
           <>
             {config.searchFields.length > 0 && (
@@ -181,9 +190,6 @@ export function ValueHelpModal({ id, open, onClose, onSelect, fixedFilters = {},
                   </Button>
                 </Space>
               </Form>
-            )}
-            {result.isError && (
-              <Alert type="error" message="조회에 실패했습니다. 서버를 확인해 주세요." showIcon />
             )}
             <div
               className="ag-theme-quartz"
@@ -276,6 +282,18 @@ export function ValueHelpInput({
     retry: false,
     staleTime: 30_000,
   });
+  useValueHelpError(
+    `metadata:${id}`,
+    meta.errorUpdatedAt,
+    'Value Help 정보를 불러오지 못했습니다.',
+    meta.isError,
+  );
+  useValueHelpError(
+    `item:${id}:${value}`,
+    detail.errorUpdatedAt,
+    '선택한 코드의 명칭을 조회하지 못했습니다.',
+    detail.isError,
+  );
   // 표시 필드만 바꾼다. value/onChange의 저장 코드는 metadata.keyField를 유지한다.
   const textField = config.displayFields?.text ?? meta.data?.textField;
   const codeField = config.displayFields?.code ?? meta.data?.keyField;
@@ -284,6 +302,17 @@ export function ValueHelpInput({
   const row = detail.data ?? {};
   const renderedValue = value ? (displayFormat ?? config.displayFormat)(shownCode, text, row) : '';
   const isInputValue = typeof renderedValue === 'string' || typeof renderedValue === 'number';
+  const formatRow = (item: Row) => {
+    const code = item[config.displayFields?.code ?? meta.data?.keyField ?? ''] ?? '';
+    const name = item[config.displayFields?.text ?? meta.data?.textField ?? ''] ?? '';
+    return (displayFormat ?? config.displayFormat)(code, name, item);
+  };
+  const selectRow = (item: Row, keyField: string) => {
+    const code = item[keyField];
+    if (!code) return;
+    queryClient.setQueryData(['item', id, code], item);
+    onChange?.(code);
+  };
 
   // readOnly에서는 Ant Design의 allowClear가 숨겨지므로 suffix에 clear 아이콘을 배치한다.
   const clearIcon = value ? (
@@ -306,21 +335,35 @@ export function ValueHelpInput({
 
   return (
     <>
-      <Input.Search
-        value={isInputValue ? renderedValue : ''}
-        prefix={
-          isInputValue ? undefined : <span className="value-help-display">{renderedValue}</span>
-        }
-        styles={isInputValue ? undefined : { input: { width: 0, minWidth: 0, padding: 0 } }}
-        aria-label={isInputValue ? undefined : `선택값 ${value ?? ''}`}
-        placeholder={value ? undefined : '검색하여 선택하세요'}
-        readOnly
-        suffix={<span>{clearIcon}</span>}
-        onSearch={() => setOpen(true)}
-        enterButton="검색"
-      />
-      {value && detail.isError && (
-        <div className="description">일치하는 코드를 조회할 수 없습니다.</div>
+      {config.autoComplete ? (
+        <ValueHelpAutoComplete
+          id={id}
+          value={value}
+          label={renderedValue}
+          metadata={meta.data}
+          filters={filters}
+          options={config.autoComplete === true ? {} : config.autoComplete}
+          format={formatRow}
+          onSelect={(item) => {
+            if (meta.data) selectRow(item, meta.data.keyField);
+          }}
+          onClear={() => onChange?.(undefined)}
+          onOpenModal={() => setOpen(true)}
+        />
+      ) : (
+        <Input.Search
+          value={isInputValue ? renderedValue : ''}
+          prefix={
+            isInputValue ? undefined : <span className="value-help-display">{renderedValue}</span>
+          }
+          styles={isInputValue ? undefined : { input: { width: 0, minWidth: 0, padding: 0 } }}
+          aria-label={isInputValue ? undefined : `선택값 ${value ?? ''}`}
+          placeholder={value ? undefined : '검색하여 선택하세요'}
+          readOnly
+          suffix={<span>{clearIcon}</span>}
+          onSearch={() => setOpen(true)}
+          enterButton="검색"
+        />
       )}
       <ValueHelpModal
         id={id}
@@ -330,11 +373,9 @@ export function ValueHelpInput({
         options={{ ...options, selectionMode: 'single' }}
         onSelect={(rows, keyField) => {
           const row = rows[0];
-          const code = row?.[keyField];
-          if (!code) return;
+          if (!row?.[keyField]) return;
           // 선택한 행을 캐시해 명칭을 즉시 표시한다. Form에는 코드만 저장한다.
-          queryClient.setQueryData(['item', id, code], row);
-          onChange?.(code);
+          selectRow(row, keyField);
           setOpen(false);
         }}
       />

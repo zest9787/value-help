@@ -57,7 +57,10 @@ export function ValueHelpDemoPage() {
           );
         }}
         onValuesChange={(changed) => {
-          if ('companyCode' in changed) form.setFieldValue('employeeId', undefined);
+          if ('companyCode' in changed) {
+            form.setFieldValue('employeeId', undefined);
+            form.setFieldValue('autoEmployeeId', undefined);
+          }
         }}
       >
         <Card title="사원 정보" style={{ maxWidth: 760 }}>
@@ -73,6 +76,15 @@ export function ValueHelpDemoPage() {
           </Form.Item>
           <Form.Item name="language" label="언어 (Select)">
             <ValueHelpSelect valueHelpId="LANGUAGE" placeholder="언어를 선택하세요" />
+          </Form.Item>
+          <Form.Item name="autoEmployeeId" label="사원 (자동완성)">
+            <ValueHelpInput
+              id="EMPLOYEE"
+              filters={company ? { companyCode: company } : {}}
+              options={{
+                autoComplete: { searchField: 'employeeName', minLength: 1, debounceMs: 300 },
+              }}
+            />
           </Form.Item>
           <Form.Item label="통화 (다중 선택)">
             <Form.Item name="currencyCodes" hidden>

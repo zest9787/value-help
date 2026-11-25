@@ -7,7 +7,9 @@ import { ValueHelpSelect } from './ValueHelpSelect';
 import { ValueHelpProvider } from '../model/ValueHelpProvider';
 import type { ValueHelpApi } from '../model/valueHelpApi';
 
+const modalError = vi.hoisted(() => vi.fn());
 vi.mock('antd', () => ({
+  Modal: { useModal: () => [{ error: modalError }, null] },
   Select: ({
     id,
     value,
@@ -65,6 +67,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.resetAllMocks();
+  modalError.mockReset();
 });
 
 describe('ValueHelpSelect', () => {
@@ -86,8 +89,28 @@ describe('ValueHelpSelect', () => {
   it('rejects silently truncated lists', async () => {
     vi.mocked(api.search).mockResolvedValue({ items: [], totalCount: 201, page: 0, size: 200 });
     render(wrap(<ValueHelpSelect valueHelpId="LANGUAGE" />));
-    expect((await screen.findByRole('alert')).textContent).toContain('200건을 초과');
+    await waitFor(() =>
+      expect(modalError).toHaveBeenCalledWith(
+        expect.objectContaining({ content: expect.stringContaining('200건을 초과') }),
+      ),
+    );
     expect((screen.getByRole('combobox') as HTMLSelectElement).disabled).toBe(true);
+  });
+
+  it('shows one modal when multiple components share a metadata failure', async () => {
+    vi.mocked(api.metadata).mockRejectedValue(new Error('server unavailable'));
+    render(
+      wrap(
+        <>
+          <ValueHelpSelect valueHelpId="LANGUAGE" />
+          <ValueHelpSelect valueHelpId="LANGUAGE" />
+        </>,
+      ),
+    );
+    await waitFor(() => expect(modalError).toHaveBeenCalledTimes(1));
+    expect(modalError).toHaveBeenCalledWith(
+      expect.objectContaining({ content: 'Value Help 정보를 불러오지 못했습니다.' }),
+    );
   });
 
   it('re-queries when dependent filters change', async () => {

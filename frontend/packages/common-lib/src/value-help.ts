@@ -10,6 +10,7 @@ export type {
   SearchField,
   SelectionMode,
   ValueHelpColumn,
+  ValueHelpAutoCompleteOptions,
   ValueHelpDisplayFormat,
   ValueHelpDefinitions,
   ValueHelpOptions,

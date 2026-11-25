@@ -126,6 +126,33 @@ const definitions = mergeValueHelpDefinitions(hrValueHelpDefinitions, {
 
 `ValueHelpInput`에도 `options`를 전달할 수 있으며 입력 필드는 단일 코드이므로 선택 모드는 항상 `single`입니다. 중첩 검색 필드도 단일 값을 반환합니다. 호출 화면에서 검색 또는 정렬 필드를 바꿀 때 해당 필드가 서버 Registry에 허용되어 있어야 합니다. `fixedFilters`는 화면 검색값보다 우선합니다.
 
+### 입력 자동완성 (선택 기능)
+
+기본 `ValueHelpInput`은 기존처럼 검색 버튼을 통해 선택합니다. 자동완성이 필요한 화면에서만 `options.autoComplete`를 켜세요. 데모의 **사원 (자동완성)** 또는 Storybook의 **Value Help → ValueHelpInput → AutoComplete**에서 확인할 수 있습니다.
+
+```tsx
+<Form.Item name="employeeId" label="사원">
+  <ValueHelpInput
+    id="EMPLOYEE"
+    filters={{ companyCode: '1000' }}
+    options={{
+      autoComplete: {
+        searchField: 'employeeName', // 서버에서 허용한 검색 필드
+        minLength: 1,
+        debounceMs: 300,
+        pageSize: 10,
+      },
+    }}
+  />
+</Form.Item>
+```
+
+`autoComplete: true`만 전달하면 서버 메타데이터의 `textField`로 최소 1자부터 300ms 대기 후 최대 10건을 검색합니다. 한 번에 지정 필드 하나만 검색하므로 코드 검색을 원한다면 서버에서 해당 코드 필터를 지원하도록 설정해야 합니다. `minLength`는 1~100, `debounceMs`는 0~5000, `pageSize`는 1~200의 정수입니다. `filters`에 지정한 고정조건은 자동완성 검색어보다 우선합니다. 자동완성 결과는 첫 페이지만 표시하며, 더 많은 결과는 옆의 **검색** 버튼에서 확인합니다.
+
+입력 중인 검색어는 임시 상태이고 Form 값에는 반영되지 않습니다. 추천 항목을 선택해야 기존 코드값이 바뀌며, 검색어를 지우거나 포커스를 벗어나도 기존 선택값은 유지됩니다. 오른쪽 지우기 버튼으로 선택값을 제거할 수 있습니다. 부모 회사가 바뀌었을 때 기존 사원 선택값을 초기화하는 일은 업무 화면에서 처리합니다.
+
+Value Help의 메타데이터·검색·단건 조회와 자동완성 요청 오류, Select 건수 초과는 `ValueHelpProvider`가 `Modal.useModal()`로 안내합니다. 같은 React Query 오류를 여러 입력이 공유하면 오류 모달은 한 번만 표시합니다. `ValueHelpProvider`는 애플리케이션의 `QueryClientProvider` 및 Ant Design `ConfigProvider` 안에 배치해 주세요.
+
 ### 값이 적을 때 Select로 사용
 
 언어처럼 목록이 적으면 공통 모달 대신 `ValueHelpSelect`를 사용할 수 있습니다. 데모의 **사원 정보 → 언어 (Select)** 에서 `KO`, `EN` 목 데이터를 확인할 수 있습니다.
@@ -146,4 +173,4 @@ import { ValueHelpSelect } from './ValueHelpSelect';
 
 `sap` 프로파일은 사원(`EMPLOYEE`)만 RAP OData V4로 조회하는 연결 샘플이며 나머지 항목은 목 데이터입니다. 실제 주소, 인증 및 필드 매핑을 설정하는 방법과 제한 사항은 [RAP 사원 연결 샘플](docs/rap-employee-sample.md)을 참고하세요. 실제 SAP 시스템은 제공되지 않아 가짜 RAP 응답으로 테스트했습니다.
 
-선택은 현재 페이지 기준입니다. 코드 직접 입력은 단건 조회 결과로 명칭을 표시하지만 SAP 운영 환경에 맞는 유효성 검사는 업무 폼에 추가해야 합니다.
+모달의 다중 선택은 현재 페이지 기준입니다. SAP 운영 환경에 맞는 유효성 검사는 업무 폼에 추가해야 합니다.

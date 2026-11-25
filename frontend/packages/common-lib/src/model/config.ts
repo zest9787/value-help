@@ -32,11 +32,20 @@ export type ModalOptions = {
   searchColumns?: number;
   gridHeight?: number;
 };
+export type ValueHelpAutoCompleteOptions = {
+  /** 서버 Registry가 허용한 문자열 검색 필드. 기본값은 메타데이터 textField. */
+  searchField?: string;
+  minLength?: number;
+  debounceMs?: number;
+  pageSize?: number;
+};
 export type ValueHelpOptions = {
   /** 표시할 응답 필드명. Form에 저장하는 키는 서버 메타데이터를 따른다. */
   displayFields?: { code?: string; text?: string };
   /** 입력창 표시 형식. Form에는 항상 코드만 저장한다. */
   displayFormat?: ValueHelpDisplayFormat;
+  /** 기본 비활성화. true 또는 설정 객체로 자동완성을 사용한다. */
+  autoComplete?: boolean | ValueHelpAutoCompleteOptions;
   title?: string;
   selectionMode?: SelectionMode;
   searchFields?: SearchField[];
@@ -47,6 +56,7 @@ export type ValueHelpOptions = {
 export type ResolvedOptions = {
   displayFields?: ValueHelpOptions['displayFields'];
   displayFormat: NonNullable<ValueHelpOptions['displayFormat']>;
+  autoComplete: boolean | ValueHelpAutoCompleteOptions;
   title: string;
   selectionMode: SelectionMode;
   searchFields: SearchField[];
@@ -106,6 +116,7 @@ export function resolveValueHelpOptions(
   return {
     displayFields: { ...preset.displayFields, ...options.displayFields },
     displayFormat: options.displayFormat ?? preset.displayFormat ?? defaultDisplayFormat,
+    autoComplete: options.autoComplete ?? preset.autoComplete ?? false,
     title: options.title ?? preset.title ?? id,
     selectionMode: options.selectionMode ?? preset.selectionMode ?? 'single',
     searchFields: options.searchFields ?? preset.searchFields ?? [],
